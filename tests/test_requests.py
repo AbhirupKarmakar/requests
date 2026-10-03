@@ -97,6 +97,24 @@ class TestRequests:
         from requests.packages.urllib3.poolmanager import PoolManager  # noqa:F401
 
     @pytest.mark.parametrize(
+        "method, method_name, kwargs",
+        (
+            ("options", "options", {"timeout": 7}),
+            ("patch", "patch", {"data": {"key": "value"}}),
+            ("delete", "delete", {"headers": {"X-Test": "value"}}),
+        ),
+    )
+    def test_method_helpers_forward_method_and_arguments(
+        self, monkeypatch, method, method_name, kwargs
+    ):
+        response = object()
+        request = mock.Mock(return_value=response)
+        monkeypatch.setattr("requests.api.request", request)
+
+        assert getattr(requests, method)("https://example.com", **kwargs) is response
+        request.assert_called_once_with(method_name, "https://example.com", **kwargs)
+
+    @pytest.mark.parametrize(
         "exception, url",
         (
             (MissingSchema, "hiwpefhipowhefopw"),
